@@ -3,15 +3,13 @@ title: Openenv
 emoji: 📦
 colorFrom: blue
 colorTo: green
-sdk: gradio
-sdk_version: "4.44.0"
+sdk: docker
 python_version: "3.11"
 app_file: app.py
 pinned: false
 suggested_hardware: t4-small
 suggested_storage: small
 license: mit
-library: gradio
 ---
 
 # SmartWarehouse - OpenEnv
