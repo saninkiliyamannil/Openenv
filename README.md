@@ -8,7 +8,7 @@ sdk_version: "4.44.0"
 app_file: app.py
 pinned: false
 suggested_hardware: t4-small
-suggested_storage: 3gb
+suggested_storage: small
 license: mit
 library: gradio
 ---
