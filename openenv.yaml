@@ -1,141 +1,54 @@
-# OpenEnv Specification v1.0
-# SmartWarehouse Environment
-
-meta:
-  name: "SmartWarehouse"
-  version: "1.0.0"
-  description: "Real-world warehouse logistics optimization for supply chain management"
-  author: "OpenEnv Team"
-  license: "MIT"
-
-environment:
-  type: "warehouse_logistics"
-  domain: "supply_chain"
-  simulation_time_step: 3600  # 1 hour per step
-  max_episode_steps: 168      # 1 week simulation
-
-observation_space:
-  dimensions: 57
-  features:
-    - name: "inventory_levels"
-      shape: [20]
-      description: "Current stock for 20 product categories"
-      dtype: "float32"
-    - name: "pending_orders"
-      shape: [3]
-      description: "Pending orders by priority"
-      dtype: "float32"
-    - name: "warehouse_zones"
-      shape: [6]
-      description: "Utilization percentage of 6 warehouse zones"
-      dtype: "float32"
-    - name: "worker_availability"
-      shape: [4]
-      description: "Available workers in 4 shift periods"
-      dtype: "float32"
-    - name: "delivery_vehicles"
-      shape: [4]
-      description: "Available delivery vehicles by capacity class"
-      dtype: "float32"
-    - name: "time_features"
-      shape: [4]
-      description: "Hour of day, day of week, is_weekend, season"
-      dtype: "float32"
-    - name: "demand_forecast"
-      shape: [10]
-      description: "Predicted demand for next period"
-      dtype: "float32"
-
-action_space:
-  type: "multi_discrete"
-  components:
-    - name: "restock_level"
-      description: "Order quantity multiplier"
-      n: 5  # 0=none, 1=low, 2=medium, 3=high, 4=emergency
-    - name: "allocation_strategy"
-      description: "Zone allocation strategy"
-      n: 5  # 0=round_robin, 1=priority, 2=proximity, 3=balance, 4=dynamic
-    - name: "worker_mode"
-      description: "Worker shift assignment mode"
-      n: 4  # 0=current, 1=overtime, 2=contractors, 3=automation
-    - name: "delivery_priority"
-      description: "Delivery scheduling priority"
-      n: 4  # 0=fifo, 1=urgency, 2=profit, 3=proximity
-    - name: "storage_action"
-      description: "Storage reorganization action"
-      n: 3  # 0=none, 1=rebalance, 2=consolidate
-
-tasks:
-  easy:
-    id: "inventory_restocking"
-    name: "Inventory Restocking"
-    description: "Optimize reorder decisions to maintain fill rate"
-    max_episode_steps: 72
-    grading:
-      min_score: 0.0
-      passing_score: 0.6
-      perfect_score: 1.0
-    success_criteria:
-      fill_rate: 0.95
-      max_stockout_hours: 4
-
-  medium:
-    id: "order_fulfillment"
-    name: "Order Fulfillment"
-    description: "Optimize order picking and delivery across zones"
-    max_episode_steps: 120
-    grading:
-      min_score: 0.0
-      passing_score: 0.65
-      perfect_score: 1.0
-    success_criteria:
-      fulfillment_rate: 0.92
-      avg_delivery_hours: 4
-
-  hard:
-    id: "warehouse_optimization"
-    name: "Warehouse Optimization"
-    description: "Multi-objective optimization of entire operations"
-    max_episode_steps: 168
-    grading:
-      min_score: 0.0
-      passing_score: 0.70
-      perfect_score: 1.0
-    success_criteria:
-      composite_score: 0.75
-      cost_reduction: 0.10
-
-reward_function:
-  partial_progress: true
-  components:
-    - name: "stockout_avoidance"
-      weight: 0.3
-      range: [0, 0.3]
-    - name: "cost_efficiency"
-      weight: 0.25
-      range: [-0.25, 0.25]
-    - name: "service_level"
-      weight: 0.45
-      range: [-0.45, 0.45]
-  normalization: "clip"
-  clip_range: [-1, 1]
-
-grader:
-  type: "weighted_sum"
-  metrics:
-    easy:
-      - fill_rate: 0.6
-      - stockout_avoidance: 0.4
-    medium:
-      - fulfillment_rate: 0.5
-      - delivery_speed: 0.5
-    hard:
-      - customer_satisfaction: 0.35
-      - cost_efficiency: 0.35
-      - throughput: 0.30
-
-defaults:
-  product_categories: 20
-  warehouse_zones: 6
-  worker_shifts: 4
-  vehicle_types: 4
+{
+  "spec_version": 1,
+  "name": "smart_warehouse",
+  "type": "space",
+  "runtime": "fastapi",
+  "app": "server.app:app",
+  "port": 7860,
+  "tasks": [
+    {
+      "id": "easy",
+      "name": "Inventory Restocking",
+      "description": "Optimize reorder decisions to maintain fill rate above 95%",
+      "max_episode_steps": 72,
+      "grader": {
+        "name": "InventoryRestockingGrader",
+        "passing_score": 0.6,
+        "max_score": 1.0,
+        "criteria": {
+          "target_fill_rate": 0.95,
+          "max_stockout_hours": 4
+        }
+      }
+    },
+    {
+      "id": "medium",
+      "name": "Order Fulfillment",
+      "description": "Optimize order picking and delivery across warehouse zones",
+      "max_episode_steps": 120,
+      "grader": {
+        "name": "OrderFulfillmentGrader",
+        "passing_score": 0.65,
+        "max_score": 1.0,
+        "criteria": {
+          "target_fulfillment_rate": 0.92,
+          "target_delivery_hours": 4.0
+        }
+      }
+    },
+    {
+      "id": "hard",
+      "name": "Warehouse Optimization",
+      "description": "Multi-objective optimization of customer satisfaction, costs, and throughput",
+      "max_episode_steps": 168,
+      "grader": {
+        "name": "WarehouseOptimizationGrader",
+        "passing_score": 0.70,
+        "max_score": 1.0,
+        "criteria": {
+          "target_composite_score": 0.75
+        }
+      }
+    }
+  ]
+}

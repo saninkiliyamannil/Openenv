@@ -1,43 +1,39 @@
 # SmartWarehouse Graders Configuration
 # ====================================
-# This file explicitly defines all graders available in the environment
+# Explicit grader definitions for all tasks
 
-graders:
+tasks:
   - id: "easy"
     name: "Inventory Restocking"
-    description: "Optimize reorder decisions to maintain fill rate above 95% while minimizing stockouts"
-    passing_score: 0.6
-    max_score: 1.0
-    metrics:
-      - name: "fill_rate"
-        weight: 0.6
-        target: 0.95
-      - name: "stockout_avoidance"
-        weight: 0.4
-        max_hours: 4
+    description: "Optimize reorder decisions to maintain fill rate above 95%"
+    max_episode_steps: 72
+    grader:
+      class: "InventoryRestockingGrader"
+      passing_score: 0.6
+      max_score: 1.0
+      criteria:
+        target_fill_rate: 0.95
+        max_stockout_hours: 4
 
   - id: "medium"
     name: "Order Fulfillment"
-    description: "Optimize order picking and delivery operations to achieve 92% fulfillment rate"
-    passing_score: 0.65
-    max_score: 1.0
-    metrics:
-      - name: "fulfillment_rate"
-        weight: 0.5
-        target: 0.92
-      - name: "delivery_speed"
-        weight: 0.5
-        target_hours: 4.0
+    description: "Optimize order picking and delivery across warehouse zones"
+    max_episode_steps: 120
+    grader:
+      class: "OrderFulfillmentGrader"
+      passing_score: 0.65
+      max_score: 1.0
+      criteria:
+        target_fulfillment_rate: 0.92
+        target_delivery_hours: 4.0
 
   - id: "hard"
     name: "Warehouse Optimization"
-    description: "Multi-objective optimization balancing customer satisfaction, costs, and throughput"
-    passing_score: 0.70
-    max_score: 1.0
-    metrics:
-      - name: "customer_satisfaction"
-        weight: 0.35
-      - name: "cost_efficiency"
-        weight: 0.35
-      - name: "throughput"
-        weight: 0.30
+    description: "Multi-objective optimization of customer satisfaction, costs, and throughput"
+    max_episode_steps: 168
+    grader:
+      class: "WarehouseOptimizationGrader"
+      passing_score: 0.70
+      max_score: 1.0
+      criteria:
+        target_composite_score: 0.75
