@@ -23,6 +23,7 @@ import json
 
 from envs.smart_warehouse.environment import WarehouseEnvironment
 from envs.smart_warehouse.models import WarehouseAction
+from envs.smart_warehouse.graders import AVAILABLE_GRADERS, GRADER_METADATA
 
 
 # =============================================================================
@@ -132,94 +133,74 @@ async def get_state():
 
 
 @app.post("/grade")
-async def grade():
+async def grade(task: str = None):
     """Get episode score."""
     global env
     
     if env is None:
         return {"score": 0.0}
     
-    score = env.grade()
-    return {"score": score}
+    if task and hasattr(env, 'grade_task'):
+        score = env.grade_task(task)
+    else:
+        score = env.grade()
+    return {"score": score, "task": task or env.task}
+
+
+@app.get("/tasks")
+async def get_tasks():
+    """Get all available tasks with graders."""
+    task_configs = {
+        "easy": {"max_episode_steps": 72},
+        "medium": {"max_episode_steps": 120},
+        "hard": {"max_episode_steps": 168},
+    }
+    
+    tasks = []
+    for task_id, metadata in GRADER_METADATA.items():
+        grader_instance = AVAILABLE_GRADERS.get(task_id)
+        tasks.append({
+            "id": task_id,
+            "name": metadata["name"],
+            "description": metadata["description"],
+            "max_episode_steps": task_configs.get(task_id, {}).get("max_episode_steps", 100),
+            "grader": {
+                "name": grader_instance.__class__.__name__ if grader_instance else metadata["name"],
+                "passing_score": grader_instance.passing_score if grader_instance else metadata["passing_score"],
+                "criteria": grader_instance.get_success_criteria() if grader_instance else metadata["criteria"],
+            }
+        })
+    
+    return {"tasks": tasks}
 
 
 @app.get("/graders")
 async def get_graders():
     """Get all available graders with their criteria."""
-    return {
-        "graders": [
-            {
-                "task": "easy",
-                "name": "Inventory Restocking",
-                "grader_class": "InventoryRestockingGrader",
-                "passing_score": 0.6,
-                "criteria": {
-                    "target_fill_rate": 0.95,
-                    "max_stockout_hours": 4
-                }
-            },
-            {
-                "task": "medium",
-                "name": "Order Fulfillment",
-                "grader_class": "OrderFulfillmentGrader",
-                "passing_score": 0.65,
-                "criteria": {
-                    "target_fulfillment": 0.92,
-                    "target_delivery_hours": 4.0
-                }
-            },
-            {
-                "task": "hard",
-                "name": "Warehouse Optimization",
-                "grader_class": "WarehouseOptimizationGrader",
-                "passing_score": 0.70,
-                "criteria": {
-                    "target_composite": 0.75
-                }
-            }
-        ]
-    }
+    graders = []
+    for task_id, grader in AVAILABLE_GRADERS.items():
+        graders.append({
+            "task": task_id,
+            "name": grader.__class__.__name__,
+            "passing_score": grader.passing_score,
+            "criteria": grader.get_success_criteria(),
+        })
+    return {"graders": graders}
 
 
 @app.get("/grader/{task}")
 async def get_grader(task: str):
     """Get grader for specific task."""
-    graders = {
-        "easy": {
-            "task": "easy",
-            "name": "Inventory Restocking",
-            "grader_class": "InventoryRestockingGrader",
-            "passing_score": 0.6,
-            "criteria": {
-                "target_fill_rate": 0.95,
-                "max_stockout_hours": 4
-            }
-        },
-        "medium": {
-            "task": "medium",
-            "name": "Order Fulfillment",
-            "grader_class": "OrderFulfillmentGrader",
-            "passing_score": 0.65,
-            "criteria": {
-                "target_fulfillment": 0.92,
-                "target_delivery_hours": 4.0
-            }
-        },
-        "hard": {
-            "task": "hard",
-            "name": "Warehouse Optimization",
-            "grader_class": "WarehouseOptimizationGrader",
-            "passing_score": 0.70,
-            "criteria": {
-                "target_composite": 0.75
-            }
-        }
-    }
-    
-    if task not in graders:
+    if task not in AVAILABLE_GRADERS:
         raise HTTPException(status_code=404, detail=f"Grader for task '{task}' not found")
     
-    return graders[task]
+    grader = AVAILABLE_GRADERS[task]
+    return {
+        "task": task,
+        "name": grader.__class__.__name__,
+        "passing_score": grader.passing_score,
+        "criteria": grader.get_success_criteria(),
+    }
 
 
 # =============================================================================

@@ -189,6 +189,16 @@ class WarehouseState(State):
 class TaskGrader:
     """Base grader for scoring agent performance."""
     
+    @property
+    def task_id(self) -> str:
+        """Task identifier."""
+        raise NotImplementedError
+    
+    @property
+    def passing_score(self) -> float:
+        """Minimum score to pass."""
+        raise NotImplementedError
+    
     def grade(self, trajectory: List[Dict], final_state: Dict) -> float:
         """Grade agent performance (0.0 to 1.0)."""
         raise NotImplementedError
@@ -196,10 +206,21 @@ class TaskGrader:
     def get_success_criteria(self) -> Dict[str, Any]:
         """Return success criteria."""
         raise NotImplementedError
+    
+    def get_grader_info(self) -> Dict[str, Any]:
+        """Return grader information for discovery."""
+        return {
+            "task_id": self.task_id,
+            "passing_score": self.passing_score,
+            "criteria": self.get_success_criteria(),
+        }
 
 
 class InventoryRestockingGrader(TaskGrader):
     """Grader for easy inventory restocking task."""
+    
+    task_id = "easy"
+    passing_score = 0.6
     
     def __init__(self):
         self.target_fill_rate = 0.95
@@ -221,11 +242,14 @@ class InventoryRestockingGrader(TaskGrader):
         return float(max(0.0, min(1.0, score)))
     
     def get_success_criteria(self) -> Dict[str, Any]:
-        return {"target_fill_rate": self.target_fill_rate, "passing_score": 0.6}
+        return {"target_fill_rate": self.target_fill_rate, "max_stockout_hours": self.max_stockout_hours}
 
 
 class OrderFulfillmentGrader(TaskGrader):
     """Grader for medium order fulfillment task."""
+    
+    task_id = "medium"
+    passing_score = 0.65
     
     def __init__(self):
         self.target_fulfillment = 0.92
@@ -247,11 +271,14 @@ class OrderFulfillmentGrader(TaskGrader):
         return float(max(0.0, min(1.0, score)))
     
     def get_success_criteria(self) -> Dict[str, Any]:
-        return {"target_fulfillment": self.target_fulfillment, "passing_score": 0.65}
+        return {"target_fulfillment_rate": self.target_fulfillment, "target_delivery_hours": self.target_delivery_hours}
 
 
 class WarehouseOptimizationGrader(TaskGrader):
     """Grader for hard warehouse optimization task."""
+    
+    task_id = "hard"
+    passing_score = 0.70
     
     def __init__(self):
         self.target_composite = 0.75
@@ -279,4 +306,4 @@ class WarehouseOptimizationGrader(TaskGrader):
         return float(max(0.0, min(1.0, score)))
     
     def get_success_criteria(self) -> Dict[str, Any]:
-        return {"target_composite": self.target_composite, "passing_score": 0.70}
+        return {"target_composite_score": self.target_composite}

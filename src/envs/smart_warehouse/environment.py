@@ -442,6 +442,23 @@ class WarehouseEnvironment(Environment):
     def grade(self) -> float:
         """Grade the current episode."""
         return self._grader.grade(self._trajectory, self._get_final_state())
+    
+    def grade_task(self, task: str) -> float:
+        """Grade the current episode with a specific task grader."""
+        from .models import (
+            InventoryRestockingGrader,
+            OrderFulfillmentGrader,
+            WarehouseOptimizationGrader,
+        )
+        
+        graders = {
+            "easy": InventoryRestockingGrader(),
+            "medium": OrderFulfillmentGrader(),
+            "hard": WarehouseOptimizationGrader(),
+        }
+        
+        grader = graders.get(task, self._grader)
+        return grader.grade(self._trajectory, self._get_final_state())
 
 
 # Alias for consistency
