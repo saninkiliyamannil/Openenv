@@ -307,3 +307,13 @@ class WarehouseOptimizationGrader(TaskGrader):
     
     def get_success_criteria(self) -> Dict[str, Any]:
         return {"target_composite_score": self.target_composite}
+
+
+@dataclass
+class TaskDefinition:
+    """Task definition for SmartWarehouse environment."""
+    task_id: int
+    name: str
+    description: str
+    required_fields: List[str]
+    level: str

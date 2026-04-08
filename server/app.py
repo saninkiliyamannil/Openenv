@@ -24,6 +24,7 @@ import json
 from envs.smart_warehouse.environment import WarehouseEnvironment
 from envs.smart_warehouse.models import WarehouseAction
 from envs.smart_warehouse.graders import AVAILABLE_GRADERS, GRADER_METADATA
+from envs.smart_warehouse.tasks import TASKS
 
 ALL_TASKS = ["easy", "medium", "hard"]
 GRADERS = AVAILABLE_GRADERS
@@ -135,62 +136,60 @@ async def get_state():
     }
 
 
-@app.post("/grade")
-async def grade(task: str = None):
-    """Get episode score."""
+@app.post("/grader")
+async def grader_endpoint(task_id: int = None, action: dict = None):
+    """Grade an action - matches successful hackathon format."""
     global env
     
     if env is None:
-        return {"score": 0.0}
+        return {"score": 0.0, "details": {"error": "Environment not initialized"}}
     
-    if task and hasattr(env, 'grade_task'):
-        score = env.grade_task(task)
-    else:
-        score = env.grade()
-    return {"score": score, "task": task or env.task}
+    if task_id is None:
+        task_id = 1
+    
+    score = env.grade()
+    return {
+        "score": score,
+        "details": {
+            "task_id": task_id,
+            "breakdown": env._get_final_state() if hasattr(env, '_get_final_state') else {},
+        },
+    }
 
 
 @app.get("/tasks")
 async def get_tasks():
-    """Get all available tasks with graders."""
-    task_configs = {
-        "easy": {"max_episode_steps": 72},
-        "medium": {"max_episode_steps": 120},
-        "hard": {"max_episode_steps": 168},
-    }
-    
-    tasks = []
-    for task_id in ["easy", "medium", "hard"]:
-        grader = GRADERS.get(task_id)
-        metadata = GRADER_METADATA.get(task_id, {})
-        tasks.append({
-            "id": task_id,
-            "name": metadata.get("name", f"Task {task_id}"),
-            "description": metadata.get("description", ""),
-            "max_episode_steps": task_configs.get(task_id, {}).get("max_episode_steps", 100),
-            "has_grader": grader is not None,
-            "grader": {
-                "name": grader.__class__.__name__ if grader else "None",
-                "passing_score": grader.passing_score if grader else 0.0,
-                "criteria": grader.get_success_criteria() if grader else {},
-            } if grader else None,
-        })
-    
-    return {"tasks": tasks}
+    """Get all available tasks with graders - matches successful hackathon format."""
+    return [
+        {
+            "name": task.name,
+            "difficulty": task.level,
+            "description": task.description,
+            "action_schema": {
+                "fields": task.required_fields,
+                "required_fields": task.required_fields,
+            },
+        }
+        for task in TASKS
+    ]
 
 
 @app.get("/graders")
 async def get_graders():
     """Get all available graders with their criteria."""
-    graders = []
-    for task_id, grader in AVAILABLE_GRADERS.items():
-        graders.append({
-            "task": task_id,
-            "name": grader.__class__.__name__,
-            "passing_score": grader.passing_score,
-            "criteria": grader.get_success_criteria(),
-        })
-    return {"graders": graders}
+    return [
+        {
+            "task_id": task.task_id,
+            "name": task.name,
+            "difficulty": task.level,
+            "description": task.description,
+            "grader": {
+                "name": GRADERS.get(task.name).__class__.__name__ if GRADERS.get(task.name) else "None",
+                "passing_score": GRADERS.get(task.name).passing_score if GRADERS.get(task.name) else 0.0,
+            },
+        }
+        for task in TASKS
+    ]
 
 
 @app.get("/grader/{task}")
