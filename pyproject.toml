@@ -30,6 +30,7 @@ dependencies = [
     "fastapi>=0.100.0,<1.0.0",
     "uvicorn>=0.23.0,<1.0.0",
     "requests>=2.31.0",
+    "openenv-core>=0.2.0",
 ]
 
 [project.optional-dependencies]
@@ -44,6 +45,9 @@ Homepage = "https://github.com/saninkiliyamannil/Openenv"
 Documentation = "https://github.com/saninkiliyamannil/Openenv#readme"
 Repository = "https://github.com/saninkiliyamannil/Openenv"
 Issues = "https://github.com/saninkiliyamannil/Openenv/issues"
+
+[project.scripts]
+openenv-server = "server_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

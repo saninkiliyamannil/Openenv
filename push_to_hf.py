@@ -44,8 +44,8 @@ def push_to_hf():
             create_repo(
                 repo_id=space_id,
                 repo_type="space",
-                space_sdk="gradio",
-                space_hardware="t4-small",
+                space_sdk="docker",
+                space_hardware="cpu-basic",
                 exist_ok=True,
                 token=token
             )

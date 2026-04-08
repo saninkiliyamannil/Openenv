@@ -4,11 +4,10 @@ emoji: 📦
 colorFrom: blue
 colorTo: green
 sdk: docker
+sdk_version: "3.11"
 python_version: "3.11"
 app_file: app.py
 pinned: false
-suggested_hardware: t4-small
-suggested_storage: small
 license: mit
 ---
 
