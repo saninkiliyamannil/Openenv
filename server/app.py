@@ -25,6 +25,9 @@ from envs.smart_warehouse.environment import WarehouseEnvironment
 from envs.smart_warehouse.models import WarehouseAction
 from envs.smart_warehouse.graders import AVAILABLE_GRADERS, GRADER_METADATA
 
+ALL_TASKS = ["easy", "medium", "hard"]
+GRADERS = AVAILABLE_GRADERS
+
 
 # =============================================================================
 # FastAPI App
@@ -157,18 +160,20 @@ async def get_tasks():
     }
     
     tasks = []
-    for task_id, metadata in GRADER_METADATA.items():
-        grader_instance = AVAILABLE_GRADERS.get(task_id)
+    for task_id in ["easy", "medium", "hard"]:
+        grader = GRADERS.get(task_id)
+        metadata = GRADER_METADATA.get(task_id, {})
         tasks.append({
             "id": task_id,
-            "name": metadata["name"],
-            "description": metadata["description"],
+            "name": metadata.get("name", f"Task {task_id}"),
+            "description": metadata.get("description", ""),
             "max_episode_steps": task_configs.get(task_id, {}).get("max_episode_steps", 100),
+            "has_grader": grader is not None,
             "grader": {
-                "name": grader_instance.__class__.__name__ if grader_instance else metadata["name"],
-                "passing_score": grader_instance.passing_score if grader_instance else metadata["passing_score"],
-                "criteria": grader_instance.get_success_criteria() if grader_instance else metadata["criteria"],
-            }
+                "name": grader.__class__.__name__ if grader else "None",
+                "passing_score": grader.passing_score if grader else 0.0,
+                "criteria": grader.get_success_criteria() if grader else {},
+            } if grader else None,
         })
     
     return {"tasks": tasks}
