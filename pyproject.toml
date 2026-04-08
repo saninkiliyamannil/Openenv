@@ -47,7 +47,7 @@ Repository = "https://github.com/saninkiliyamannil/Openenv"
 Issues = "https://github.com/saninkiliyamannil/Openenv/issues"
 
 [project.scripts]
-openenv-server = "server_app:main"
+server = "server_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

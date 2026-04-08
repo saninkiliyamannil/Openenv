@@ -143,6 +143,85 @@ async def grade():
     return {"score": score}
 
 
+@app.get("/graders")
+async def get_graders():
+    """Get all available graders with their criteria."""
+    return {
+        "graders": [
+            {
+                "task": "easy",
+                "name": "Inventory Restocking",
+                "grader_class": "InventoryRestockingGrader",
+                "passing_score": 0.6,
+                "criteria": {
+                    "target_fill_rate": 0.95,
+                    "max_stockout_hours": 4
+                }
+            },
+            {
+                "task": "medium",
+                "name": "Order Fulfillment",
+                "grader_class": "OrderFulfillmentGrader",
+                "passing_score": 0.65,
+                "criteria": {
+                    "target_fulfillment": 0.92,
+                    "target_delivery_hours": 4.0
+                }
+            },
+            {
+                "task": "hard",
+                "name": "Warehouse Optimization",
+                "grader_class": "WarehouseOptimizationGrader",
+                "passing_score": 0.70,
+                "criteria": {
+                    "target_composite": 0.75
+                }
+            }
+        ]
+    }
+
+
+@app.get("/grader/{task}")
+async def get_grader(task: str):
+    """Get grader for specific task."""
+    graders = {
+        "easy": {
+            "task": "easy",
+            "name": "Inventory Restocking",
+            "grader_class": "InventoryRestockingGrader",
+            "passing_score": 0.6,
+            "criteria": {
+                "target_fill_rate": 0.95,
+                "max_stockout_hours": 4
+            }
+        },
+        "medium": {
+            "task": "medium",
+            "name": "Order Fulfillment",
+            "grader_class": "OrderFulfillmentGrader",
+            "passing_score": 0.65,
+            "criteria": {
+                "target_fulfillment": 0.92,
+                "target_delivery_hours": 4.0
+            }
+        },
+        "hard": {
+            "task": "hard",
+            "name": "Warehouse Optimization",
+            "grader_class": "WarehouseOptimizationGrader",
+            "passing_score": 0.70,
+            "criteria": {
+                "target_composite": 0.75
+            }
+        }
+    }
+    
+    if task not in graders:
+        raise HTTPException(status_code=404, detail=f"Grader for task '{task}' not found")
+    
+    return graders[task]
+
+
 # =============================================================================
 # Web Interface
 # =============================================================================
