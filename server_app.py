@@ -18,6 +18,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel
 import uvicorn
 import json
 
@@ -25,6 +26,20 @@ from envs.smart_warehouse.environment import WarehouseEnvironment
 from envs.smart_warehouse.models import WarehouseAction
 from envs.smart_warehouse.graders import AVAILABLE_GRADERS, GRADER_METADATA
 from envs.smart_warehouse.tasks import TASKS
+
+
+# Request models for proper body handling
+class ResetRequest(BaseModel):
+    task: str = "easy"
+    seed: int = 42
+    max_episode_steps: int = 50
+    task_id: int = None
+    episode_id: str = None
+
+
+class StepRequest(BaseModel):
+    action: dict = None
+
 
 ALL_TASKS = ["easy", "medium", "hard"]
 GRADERS = AVAILABLE_GRADERS
@@ -50,14 +65,23 @@ async def health():
 
 
 @app.post("/reset")
-async def reset(task: str = "easy", seed: int = 42, max_episode_steps: int = 50):
+async def reset(request: ResetRequest = None):
     """Reset the environment."""
     global env
+    
+    # Handle empty body or None
+    if request is None:
+        request = ResetRequest()
+    
+    task = request.task or "easy"
+    seed = request.seed if request.seed else 42
+    max_episode_steps = request.max_episode_steps if request.max_episode_steps else 50
+    
     env = WarehouseEnvironment(task=task, seed=seed, max_episode_steps=max_episode_steps)
     obs = env.reset()
     
     return {
-        "observation": {
+        "observation": obs.model_dump() if hasattr(obs, 'model_dump') else {
             "inventory_levels": obs.inventory_levels,
             "pending_orders": obs.pending_orders,
             "warehouse_zones": obs.warehouse_zones,
@@ -76,13 +100,18 @@ async def reset(task: str = "easy", seed: int = 42, max_episode_steps: int = 50)
 
 
 @app.post("/step")
-async def step(action: dict):
+async def step(request: StepRequest = None):
     """Execute one environment step."""
     global env
     
     if env is None:
         env = WarehouseEnvironment()
         env.reset()
+    
+    # Handle empty body or None
+    action = {}
+    if request and request.action:
+        action = request.action
     
     warehouse_action = WarehouseAction(
         restock_level=action.get("restock_level", 0),
@@ -136,16 +165,25 @@ async def get_state():
     }
 
 
+class GraderRequest(BaseModel):
+    task_id: int = None
+    action: dict = None
+    email_data: dict = None
+    email_id: str = None
+
+
 @app.post("/grader")
-async def grader_endpoint(task_id: int = None, action: dict = None):
+async def grader_endpoint(request: GraderRequest = None):
     """Grade an action - matches successful hackathon format."""
     global env
+    
+    if request is None:
+        request = GraderRequest()
     
     if env is None:
         return {"score": 0.0, "details": {"error": "Environment not initialized"}}
     
-    if task_id is None:
-        task_id = 1
+    task_id = request.task_id if request.task_id else 1
     
     score = env.grade()
     return {
