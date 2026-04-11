@@ -25,6 +25,7 @@ from .models import (
     InventoryRestockingGrader,
     OrderFulfillmentGrader,
     WarehouseOptimizationGrader,
+    TaskDefinition,
 )
 from .environment import WarehouseEnvironment, create_smart_warehouse_environment
 from .client import SmartWarehouseEnv, SmartWarehouseToolEnv
@@ -36,6 +37,7 @@ from .graders import (
     list_all_tasks,
     get_all_grader_metadata,
 )
+from .tasks import TASKS
 
 __all__ = [
     "WarehouseAction",
@@ -45,6 +47,7 @@ __all__ = [
     "InventoryRestockingGrader",
     "OrderFulfillmentGrader",
     "WarehouseOptimizationGrader",
+    "TaskDefinition",
     "WarehouseEnvironment",
     "create_smart_warehouse_environment",
     "SmartWarehouseEnv",
@@ -55,4 +58,5 @@ __all__ = [
     "get_grader_metadata",
     "list_all_tasks",
     "get_all_grader_metadata",
+    "TASKS",
 ]

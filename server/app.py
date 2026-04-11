@@ -25,7 +25,12 @@ import json
 from envs.smart_warehouse.environment import WarehouseEnvironment
 from envs.smart_warehouse.models import WarehouseAction
 from envs.smart_warehouse.graders import AVAILABLE_GRADERS, GRADER_METADATA
-from envs.smart_warehouse.tasks import TASKS
+from envs.smart_warehouse.tasks import TASKS, TaskDefinition
+from envs.smart_warehouse import (
+    InventoryRestockingGrader,
+    OrderFulfillmentGrader,
+    WarehouseOptimizationGrader,
+)
 
 
 # Request models for proper body handling
@@ -170,6 +175,7 @@ class GraderRequest(BaseModel):
     action: dict = None
     email_data: dict = None
     email_id: str = None
+    task: str = None
 
 
 @app.post("/grader")
@@ -183,16 +189,35 @@ async def grader_endpoint(request: GraderRequest = None):
     if env is None:
         return {"score": 0.0, "details": {"error": "Environment not initialized"}}
     
+    # Handle both task_id (int) and task (string)
     task_id = request.task_id if request.task_id else 1
+    task_name = request.task
     
-    score = env.grade()
+    # If task name provided, use it to get the right grader
+    if task_name and hasattr(env, 'task'):
+        original_task = env.task
+        env.task = task_name
+        env._setup_grader()
+        score = env.grade()
+        env.task = original_task
+        env._setup_grader()
+    else:
+        score = env.grade()
+    
     return {
         "score": score,
         "details": {
             "task_id": task_id,
+            "task_name": task_name or env.task,
             "breakdown": env._get_final_state() if hasattr(env, '_get_final_state') else {},
         },
     }
+
+
+@app.post("/grade")
+async def grade_endpoint(request: GraderRequest = None):
+    """Alternative grade endpoint."""
+    return await grader_endpoint(request)
 
 
 @app.get("/tasks")
