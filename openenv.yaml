@@ -1,54 +1,42 @@
-{
-  "spec_version": 1,
-  "name": "smart_warehouse",
-  "type": "space",
-  "runtime": "fastapi",
-  "app": "server.app:app",
-  "port": 7860,
-  "tasks": [
-    {
-      "id": "easy",
-      "name": "Inventory Restocking",
-      "description": "Optimize reorder decisions to maintain fill rate above 95%",
-      "max_episode_steps": 72,
-      "grader": {
-        "name": "InventoryRestockingGrader",
-        "passing_score": 0.6,
-        "max_score": 1.0,
-        "criteria": {
-          "target_fill_rate": 0.95,
-          "max_stockout_hours": 4
-        }
-      }
-    },
-    {
-      "id": "medium",
-      "name": "Order Fulfillment",
-      "description": "Optimize order picking and delivery across warehouse zones",
-      "max_episode_steps": 120,
-      "grader": {
-        "name": "OrderFulfillmentGrader",
-        "passing_score": 0.65,
-        "max_score": 1.0,
-        "criteria": {
-          "target_fulfillment_rate": 0.92,
-          "target_delivery_hours": 4.0
-        }
-      }
-    },
-    {
-      "id": "hard",
-      "name": "Warehouse Optimization",
-      "description": "Multi-objective optimization of customer satisfaction, costs, and throughput",
-      "max_episode_steps": 168,
-      "grader": {
-        "name": "WarehouseOptimizationGrader",
-        "passing_score": 0.70,
-        "max_score": 1.0,
-        "criteria": {
-          "target_composite_score": 0.75
-        }
-      }
-    }
-  ]
-}
+spec_version: 1
+name: smart_warehouse
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
+
+tasks:
+  - id: easy
+    name: Inventory Restocking
+    description: Optimize reorder decisions to maintain fill rate above 95%
+    max_episode_steps: 72
+    grader:
+      name: InventoryRestockingGrader
+      passing_score: 0.6
+      max_score: 1.0
+      criteria:
+        target_fill_rate: 0.95
+        max_stockout_hours: 4
+
+  - id: medium
+    name: Order Fulfillment
+    description: Optimize order picking and delivery across warehouse zones
+    max_episode_steps: 120
+    grader:
+      name: OrderFulfillmentGrader
+      passing_score: 0.65
+      max_score: 1.0
+      criteria:
+        target_fulfillment_rate: 0.92
+        target_delivery_hours: 4.0
+
+  - id: hard
+    name: Warehouse Optimization
+    description: Multi-objective optimization of customer satisfaction, costs, and throughput
+    max_episode_steps: 168
+    grader:
+      name: WarehouseOptimizationGrader
+      passing_score: 0.70
+      max_score: 1.0
+      criteria:
+        target_composite_score: 0.75
